@@ -15,6 +15,7 @@ public class Filter {
     Mat imageConveer;
 
     private static native void rotate(long matAddrIn, long matAddrOut, boolean clockwise);
+    private static native void cornerDetect(long matAddrIn, long matAddrOut);
 
     public Filter(boolean conveer) {
         System.loadLibrary("OpenCvProcessImageLib");
@@ -48,6 +49,15 @@ public class Filter {
         rotate(imageConveer.getNativeObjAddr(), rotatedImage.getNativeObjAddr(), clockwise);
         imageConveer = rotatedImage;
         return imageConveer;
+    }
+
+    public Mat cornerDetectAuto(Mat image){
+        if (!conveer || imageConveer == null) {
+            imageConveer = image;
+        }
+        Mat imageCorners = new Mat();
+        cornerDetect(imageConveer.getNativeObjAddr(), imageCorners.getNativeObjAddr());
+        return imageCorners;
     }
 
     public Mat perspectiveTransform(Mat image, ArrayList<Point> corners) {

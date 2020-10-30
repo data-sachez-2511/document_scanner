@@ -8,6 +8,7 @@
     <string name="action_Contrast">Contrast enhancement</string>
     <string name="action_blur">Gaussian blur</string>
     <string name="action_manuallyCornerSelect">Manually corner Select</string>
+    <string name="action_autoCornerSelect">Auto corner Select</string>
     <string name="action_rotate90">Rotate 90 clockwise</string>
     <string name="action_rotate270">Rotate 90 anticlockwise</string>
     <string name="action_perspectiveTransform">Perspective transform</string>

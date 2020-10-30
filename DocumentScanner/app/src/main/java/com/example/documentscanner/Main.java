@@ -201,6 +201,13 @@ public class Main extends AppCompatActivity {
                 Log.d(TAG, "corner: " + corners.toString());
                 return true;
 
+            case R.id.action_autoCornerSelect:
+                Log.d(TAG, "start auto corner selecting");
+                if(isImageLoaded()) {
+                    displayImage(filter.cornerDetectAuto(sampledImageClone));
+                }
+                return true;
+
             case R.id.action_perspectiveTransform:
                 if(corners.size()!=4)
                     return true;
