@@ -28,32 +28,65 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_rotate
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_cornerDetect
         (JNIEnv *, jclass, jlong addrMatIn, jlong addrMatOut) {
-    LOGD("Java_com_example_documentscanner_Filter_rotate -- BEGIN");
+    LOGD("Java_com_example_documentscanner_Filter_cornerDetect -- BEGIN");
     cv::Mat &mIn = *(cv::Mat *) addrMatIn;
-    cv::Mat mInGray;
-    cv::cvtColor(mIn, mInGray, COLOR_BGR2GRAY);
+    cv::Mat mInGray, bGray;
+    if(mIn.type() != 0){
+        cv::cvtColor(mIn, mInGray, COLOR_BGR2GRAY);
+    }
+    else{
+        mInGray = mIn.clone();
+    }
+    LOGD("Java_com_example_documentscanner_Filter_cornerDetect -- cvtcolor");
+    bGray = cv::Mat(mInGray.rows, mInGray.cols, mInGray.type());
+    LOGD("tyt");
+    cv::bilateralFilter(mInGray, bGray, 5, 75, 75);
+    LOGD("tyt1");
     cv::Mat &mOut = *(cv::Mat *) addrMatOut;
-    mOut = mIn.clone();
+    mOut = bGray.clone();
 
     LOGD("Java_com_example_documentscanner_Filter_rotate -- END");
-    int blockSize = 2;
-    int apertureSize = 3;
-    double k = 0.04;
     int thresh = 200;
     Mat dst = Mat::zeros(mIn.size(), CV_32FC1);
-    cornerHarris(mInGray, dst, blockSize, apertureSize, k);
-    Mat dst_norm, dst_norm_scaled;
-    normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
-    convertScaleAbs(dst_norm, dst_norm_scaled);
-    for (int i = 0; i < dst_norm.rows; i++) {
-        for (int j = 0; j < dst_norm.cols; j++) {
-            if ((int) dst_norm.at<float>(i, j) > thresh) {
-                circle(dst_norm_scaled, Point(j, i), 5, Scalar(0), 2, 8, 0);
-            }
+    cornerHarris(bGray, dst, 2, 3, 0.04);
+    Mat out = mIn.clone();
+    float max = 0;
+    for (int i = 0; i < dst.rows; i++) {
+        for (int j = 0; j < dst.cols; j++) {
+            if(dst.at<float>(i, j) > max)
+                max = dst.at<float>(i, j);
         }
     }
-    mOut = dst_norm_scaled.clone();
+    std::vector<cv::Point2f> corners;
+    for (int i = 0; i < dst.rows; i++) {
+        for (int j = 0; j < dst.cols; j++) {
+            if(dst.at<float>(i, j) > max * 0.01)
+                corners.emplace_back(Point2f(i, j));
+        }
+    }
+    std::vector<cv::Point2f> anchors_corners = {
+            cv::Point2f(0,0),
+            cv::Point2f(0, dst.cols - 1),
+            cv::Point2f(dst.rows - 1, 0),
+            cv::Point2f(dst.rows - 1, dst.cols - 1),
+    };
+    std::vector<cv::Point2f> result_corners;
+    for(int i=0;i<anchors_corners.size();i++){
+        auto min_dist = cv::norm(anchors_corners[i] - corners[0]);
+        auto min_point = corners[0];
+        for(int j=1;j<corners.size();j++){
+            auto dist = cv::norm(anchors_corners[i] - corners[j]);
+            if(dist < min_dist){
+                min_dist = dist;
+                min_point = corners[j];
+            }
+        }
+        result_corners.push_back(min_point);
+    }
+    if(result_corners.size() == 4) {
+
+        auto t = cv::getPerspectiveTransform(result_corners, anchors_corners);
+        cv::warpPerspective(mIn, mOut, t, mOut.size());
+    }
 }
-
-
 

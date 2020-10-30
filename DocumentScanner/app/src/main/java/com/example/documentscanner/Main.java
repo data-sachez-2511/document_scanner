@@ -170,6 +170,27 @@ public class Main extends AppCompatActivity {
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"),
                         SELECT_PICTURE);
                 return true;
+            case R.id.action_gamma:
+                Log.d(TAG, "start gamma correction");
+                if(isImageLoaded()) {
+                    sampledImageClone = filter.gammaCorrection(sampledImageClone);
+                    displayImage(sampledImageClone);
+                }
+                return true;
+            case R.id.action_contrast:
+                Log.d(TAG, "start contrast");
+                if(isImageLoaded()) {
+                    sampledImageClone = filter.contrast(sampledImageClone);
+                    displayImage(sampledImageClone);
+                }
+                return true;
+            case R.id.action_equalizehisto:
+                Log.d(TAG, "start histo");
+                if(isImageLoaded()) {
+                    sampledImageClone = filter.equalizeHisto(sampledImageClone);
+                    displayImage(sampledImageClone);
+                }
+                return true;
             case R.id.action_binary:
                 Log.d(TAG, "start binarization");
                 if(isImageLoaded()) {

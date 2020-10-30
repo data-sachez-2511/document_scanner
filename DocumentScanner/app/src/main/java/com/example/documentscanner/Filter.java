@@ -8,6 +8,9 @@ import org.opencv.utils.Converters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
+import static org.opencv.core.CvType.CV_8U;
 
 public class Filter {
     private final String TAG = "FILTER";
@@ -28,6 +31,102 @@ public class Filter {
 
     public Mat getImageConveer(){
         return imageConveer;
+    }
+
+    public Mat contrast(Mat image){
+        if (!conveer || imageConveer == null) {
+            imageConveer = image;
+        }
+        Log.d(TAG, "image type: " + imageConveer.type());
+        if(imageConveer.type() != CvType.CV_8UC1)
+            Imgproc.cvtColor(imageConveer,imageConveer, Imgproc.COLOR_RGB2GRAY);
+        Mat out=new Mat();
+        Core.MinMaxLocResult minMaxLocRes = Core.minMaxLoc(imageConveer);
+        double minVal = minMaxLocRes.minVal;//+20;
+        double maxVal = minMaxLocRes.maxVal;//-50;
+        imageConveer.convertTo(out, CV_8U, 255.0 / (maxVal - minVal), -minVal * 255.0 / (maxVal - minVal));
+        return imageConveer;
+    }
+
+    private byte saturate(double val) {
+        int iVal = (int) Math.round(val);
+        iVal = iVal > 255 ? 255 : (iVal < 0 ? 0 : iVal);
+        return (byte) iVal;
+    }
+
+    public Mat gammaCorrection(Mat image){
+        if (!conveer || imageConveer == null) {
+            imageConveer = image;
+        }
+        Log.d(TAG, "image type: " + imageConveer.type());
+        if(imageConveer.type() != CvType.CV_8UC1)
+            Imgproc.cvtColor(imageConveer,imageConveer, Imgproc.COLOR_RGB2GRAY);
+        double gammaValue = 1.3;
+        Mat lookUpTable = new Mat(1, 256, CV_8U);
+        byte[] lookUpTableData = new byte[(int) (lookUpTable.total() * lookUpTable.channels())];
+        for (int i = 0; i < lookUpTable.cols(); i++) {
+            lookUpTableData[i] = saturate(Math.pow(i / 255.0, gammaValue) * 255.0);
+        }
+        lookUpTable.put(0, 0, lookUpTableData);
+
+        Core.LUT(imageConveer, lookUpTable, imageConveer);
+        return imageConveer;
+    }
+
+    public Mat equalizeHisto(Mat image){
+        if (!conveer || imageConveer == null) {
+            imageConveer = image;
+        }
+        Log.d(TAG, "image type: " + imageConveer.type());
+        if(imageConveer.type() != CvType.CV_8UC1)
+            Imgproc.cvtColor(imageConveer,imageConveer, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.equalizeHist(imageConveer, imageConveer);
+        return imageConveer;
+    }
+
+    public float fft(Mat image){
+        if (!conveer || imageConveer == null) {
+            imageConveer = image;
+        }
+        Log.d(TAG, "image type: " + imageConveer.type());
+        if(imageConveer.type() != CvType.CV_8UC1)
+            Imgproc.cvtColor(imageConveer,imageConveer, Imgproc.COLOR_RGB2GRAY);
+        imageConveer.convertTo(imageConveer, CvType.CV_64FC1);
+
+        int m = Core.getOptimalDFTSize(imageConveer.rows());
+        int n = Core.getOptimalDFTSize(imageConveer.cols()); // on the border
+
+        Mat padded = new Mat(new Size(n, m), CvType.CV_64FC1); // expand input
+
+        Core.copyMakeBorder(imageConveer, padded, 0, m - imageConveer.rows(), 0,
+                n - imageConveer.cols(), Core.BORDER_CONSTANT);
+
+        List<Mat> planes = new ArrayList<Mat>();
+        planes.add(padded);
+        planes.add(Mat.zeros(padded.rows(), padded.cols(), CvType.CV_64FC1));
+        Mat complexI = new Mat();
+        Core.merge(planes, complexI); // Add to the expanded another plane with zeros
+        Mat complexI2=new Mat();
+        Core.dft(complexI, complexI2); // this way the result may fit in the source matrix
+
+        // compute the magnitude and switch to logarithmic scale
+        // => log(1 + sqrt(Re(DFT(I))^2 + Im(DFT(I))^2))
+        Core.split(complexI2, planes); // planes[0] = Re(DFT(I), planes[1] =Im(DFT(I))
+        Mat spectrum = new Mat();
+        Core.magnitude(planes.get(0), planes.get(1), spectrum);
+        Core.add(spectrum, new Scalar(1), spectrum);
+        Core.log(spectrum, spectrum);
+        float mean = 0;
+        int count = 0 ;
+        for(int i=0;i<spectrum.rows();i++){
+            for(int j=0;j<spectrum.cols();j++){
+                mean += spectrum.get(i, j)[0];
+                count ++;
+            }
+        }
+        mean = mean / count;
+        Log.d(TAG, "fft: " + mean);
+        return mean;
     }
 
     public Mat binarization(Mat image) {
@@ -145,4 +244,6 @@ public class Filter {
         corners.add(bottomRightPoint);
         corners.add(bottomLeftPoint);
     }
+
+
 }

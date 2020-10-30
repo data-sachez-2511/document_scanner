@@ -6,9 +6,9 @@
         app:showAsAction="never"
         android:title="@string/action_OpenGallery"/>
     <item
-        android:id="@+id/action_grayscale"
+        android:id="@+id/action_openCamera"
         app:showAsAction="never"
-        android:title="@string/action_GrayScale"/>
+        android:title="@string/action_openCamera"/>
     <item
         android:id="@+id/action_binary"
         app:showAsAction="never"
@@ -26,9 +26,9 @@
         app:showAsAction="never"
         android:title="@string/action_EqualizeHisto"/>
     <item
-        android:id="@+id/action_blur"
+        android:id="@+id/action_fft"
         app:showAsAction="never"
-        android:title="@string/action_blur"/>
+        android:title="@string/action_fft"/>
     <item
         android:id="@+id/action_manuallyCornerSelect"
         app:showAsAction="never"
