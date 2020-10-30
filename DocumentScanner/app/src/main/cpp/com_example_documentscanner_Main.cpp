@@ -45,7 +45,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_corner
     cv::Mat &mOut = *(cv::Mat *) addrMatOut;
     mOut = bGray.clone();
 
-    LOGD("Java_com_example_documentscanner_Filter_rotate -- END");
+
     int thresh = 200;
     Mat dst = Mat::zeros(mIn.size(), CV_32FC1);
     cornerHarris(bGray, dst, 2, 3, 0.04);
@@ -61,14 +61,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_corner
     for (int i = 0; i < dst.rows; i++) {
         for (int j = 0; j < dst.cols; j++) {
             if(dst.at<float>(i, j) > max * 0.01)
-                corners.emplace_back(Point2f(i, j));
+                corners.emplace_back(Point2f(j, i));
         }
     }
     std::vector<cv::Point2f> anchors_corners = {
             cv::Point2f(0,0),
-            cv::Point2f(0, dst.cols - 1),
-            cv::Point2f(dst.rows - 1, 0),
-            cv::Point2f(dst.rows - 1, dst.cols - 1),
+            cv::Point2f(0, dst.rows - 1),
+            cv::Point2f(dst.cols - 1, 0),
+            cv::Point2f(dst.cols - 1, dst.rows - 1),
     };
     std::vector<cv::Point2f> result_corners;
     for(int i=0;i<anchors_corners.size();i++){
@@ -86,6 +86,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_corner
         corners.erase(corners.begin() + min_index);
         result_corners.push_back(min_point);
     }
+    if(result_corners.size() == 4)
+        LOGD("Java_com_example_documentscanner_Filter_rotate -- corners is 4");
+//    for(auto corner: result_corners){
+//        cv::circle(mOut, corner, 4, cv::Scalar(255, 0, 255));
+//    }
+    LOGD("Java_com_example_documentscanner_Filter_rotate -- END");
     if(result_corners.size() == 4) {
 
         auto t = cv::getPerspectiveTransform(result_corners, anchors_corners);
