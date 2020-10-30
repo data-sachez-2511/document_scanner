@@ -74,13 +74,16 @@ extern "C" JNIEXPORT void JNICALL Java_com_example_documentscanner_Filter_corner
     for(int i=0;i<anchors_corners.size();i++){
         auto min_dist = cv::norm(anchors_corners[i] - corners[0]);
         auto min_point = corners[0];
+        auto min_index = 0;
         for(int j=1;j<corners.size();j++){
             auto dist = cv::norm(anchors_corners[i] - corners[j]);
             if(dist < min_dist){
                 min_dist = dist;
                 min_point = corners[j];
+                min_index = j;
             }
         }
+        corners.erase(corners.begin() + min_index);
         result_corners.push_back(min_point);
     }
     if(result_corners.size() == 4) {
